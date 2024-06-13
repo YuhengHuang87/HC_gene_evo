@@ -1,0 +1,3 @@
+16 1
+
+(((((((melanogaster,(simulans,sechellia)),(erecta,yakuba)),eugracilis),((biarmipes, suzukii), takahashii)),(elegans,rhopaloa)),ficusphila),(serrata,kikkawai),(ananassae, bipectinata));

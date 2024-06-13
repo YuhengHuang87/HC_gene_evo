@@ -1,0 +1,28 @@
+#!/bin/bash
+
+#SBATCH --job-name=Suvar_mapping      ## Name of the job.
+#SBATCH -A grylee_lab     ## account to charge
+#SBATCH -p standard          ## partition/queue name
+#SBATCH --nodes=1            ## (-N) number of nodes to use
+#SBATCH --ntasks=1           ## (-n) number of tasks to launch
+#SBATCH --cpus-per-task=1    ## number of cores the job needs
+#SBATCH --error=slurm-%J.err ## error log file
+
+#search_dir=/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/Clustal_input
+search_dir=/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/random_set_for_Clustal
+for file in "$search_dir"/*fa
+do
+
+echo "${file##*/}"
+echo ${file}
+
+#clustalo -i "/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/Clustal_AA_input/${file##*/}" -o "/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/Clustal_AA_input/${file##*/}_clustalo.out"
+clustalo -i "/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/random_set_AA_Clustal_input/${file##*/}" -o "/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/random_set_AA_Clustal_input/${file##*/}_clustalo.out"
+
+
+#/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/pal2nal.v14/pal2nal.pl "/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/Clustal_AA_input/${file##*/}_clustalo.out" "${file}" -output paml > "Clustal_to_PAML/${file##*/}.codon"
+/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/pal2nal.v14/pal2nal.pl "/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/random_set_AA_Clustal_input/${file##*/}_clustalo.out" "${file}" -output paml > "Clustal_PAML_random/${file##*/}.codon"
+
+
+done
+

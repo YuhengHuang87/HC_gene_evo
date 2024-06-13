@@ -1,0 +1,12 @@
+#!/bin/bash
+
+#SBATCH --job-name=PAML      ## Name of the job.
+#SBATCH -A grylee_lab     ## account to charge
+#SBATCH -p standard          ## partition/queue name
+#SBATCH --nodes=1            ## (-N) number of nodes to use
+#SBATCH --ntasks=1           ## (-n) number of tasks to launch
+#SBATCH --cpus-per-task=1    ## number of cores the job needs
+#SBATCH --error=slurm-%J.err ## error log file
+
+
+/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/paml4.9j/bin/codeml

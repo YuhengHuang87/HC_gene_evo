@@ -1,0 +1,23 @@
+#!/bin/bash
+
+#SBATCH --job-name=fIDPnn      ## Name of the job.
+#SBATCH -A grylee_lab     ## account to charge
+#SBATCH -p standard          ## partition/queue name
+#SBATCH --nodes=1            ## (-N) number of nodes to use
+#SBATCH --ntasks=1           ## (-n) number of tasks to launch
+#SBATCH --cpus-per-task=3    ## number of cores the job needs
+#SBATCH --error=slurm-%J.err ## error log file
+#SBATCH -t 4-20:00:00
+
+
+conda init
+conda activate fldpnn_2
+#download the fIDPnn scripts and install the required packages
+
+for i in {1..1000}
+
+do
+python3 /dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/fldpnn-master/run_flDPnn_nofunc.py /dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/random_set_AA_Clustal_input/AA_random_gene/sa${i}/*.fa
+echo "done $i genes"
+done
+

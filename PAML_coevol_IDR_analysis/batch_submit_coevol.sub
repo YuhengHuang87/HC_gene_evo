@@ -1,0 +1,28 @@
+#!/bin/bash
+
+#SBATCH --job-name=assign_TE_gene      ## Name of the job.
+#SBATCH -A grylee_lab     ## account to charge
+#SBATCH -p standard          ## partition/queue name
+#SBATCH --nodes=1            ## (-N) number of nodes to use
+#SBATCH --ntasks=1           ## (-n) number of tasks to launch
+#SBATCH --cpus-per-task=1    ## number of cores the job needs
+#SBATCH --error=slurm-%J.err ## error log file
+#SBATCH -t 10-20:00:00
+
+#perl ref_nuc_AA_geneID_update2.pl
+#perl ref_nuc_coding_sequence_longest_Dmel.pl
+#perl ref_nuc_coding_sequence_species.pl
+#perl ref_nuc_AA_geneID_All_genes.pl
+
+for dir in */ ; do
+    echo "$dir"
+    #echo "${dir##*/}"
+
+    cd $dir
+    ls
+    sbatch coevol_run.sub
+    #sbatch rerun_coevol.sub
+    cd /dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/coevol/focal
+    #cd /dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/coevol/random
+
+done

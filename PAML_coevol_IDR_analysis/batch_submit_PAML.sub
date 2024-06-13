@@ -1,0 +1,24 @@
+#!/bin/bash
+
+#SBATCH --job-name=assign_PAML_jobs      ## Name of the job.
+#SBATCH -A grylee_lab     ## account to charge
+#SBATCH -p standard          ## partition/queue name
+#SBATCH --nodes=1            ## (-N) number of nodes to use
+#SBATCH --ntasks=1           ## (-n) number of tasks to launch
+#SBATCH --cpus-per-task=1    ## number of cores the job needs
+#SBATCH --error=slurm-%J.err ## error log file
+#SBATCH -t 10-20:00:00
+
+
+
+for dir in */ ; do
+    echo "$dir"
+    #echo "${dir##*/}"
+
+    cd $dir
+    ls
+    sbatch /dfs7/grylee/yuhenh3/het_recomb_gene_evo/paml_hpc.sub
+    #cd /dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/Clustal_to_PAML/input_files/
+    cd /dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/Clustal_PAML_random/input_files/
+
+done
