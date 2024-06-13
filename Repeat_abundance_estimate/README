@@ -1,4 +1,4 @@
-Before start install repeatmasker, bwa, samtools, minimap2, Satellite Repeat Finder (https://github.com/lh3/srf), kmc3 (https://github.com/refresh-bio/KMC), trim_galore (https://github.com/FelixKrueger/TrimGalore)
+Before start, install repeatmasker, bwa, samtools, minimap2, Satellite Repeat Finder (https://github.com/lh3/srf), kmc3 (https://github.com/refresh-bio/KMC), trim_galore (https://github.com/FelixKrueger/TrimGalore)
 
 I. estimate satellite repeat abundance
 1. sbatch Satellite_repeat_mapping_pipline.sub #follow the Satellite Repeat Finder program
