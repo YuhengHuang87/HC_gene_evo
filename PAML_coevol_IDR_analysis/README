@@ -15,8 +15,8 @@ II. prepare for parallel running of PAML: mkdir sa{1..148} or mkdir sa{1..1000} 
 6. sbatch batch_submit_PAML.sub #submit PAML jobs in batch, need to call the paml_hpc.sub
 
 III. run Coevol
-7. perl prepare_coevolve_input_clean_data.pl #only run for genes that show signal of positive selection based on PAML
-8. batch_submit_coevol.sub #submite jobs in batch, need to call the coevol_run.sub
+7. perl prepare_coevolve_input_clean_data.pl #set up sequence files, only run genes with signals of positive selection from PAML
+8. batch_submit_coevol.sub #submite jobs in batch, need to call the coevol_run.sub, the tree file (coevol_tree_file.txt), and the trait file (dro.traits_4.txt)
 
 IV. IDR analysis
 9. sbatch fIDPnn.sub #run flDPnn. #You can also use their servers: http://biomine.cs.vcu.edu/servers/flDPnn/
