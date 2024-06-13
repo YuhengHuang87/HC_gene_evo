@@ -9,5 +9,15 @@ I. Prepare coding sequences
 2. perl extract_sequences_clustal_input.pl #gather ortholog sequences across species for each gene
 3. perl translate_CDS_to_AA_seq.pl  #translate the coding sequences into amino acid sequences
 4. sbatch clustal.sub #perform alignment using Clustal Omega and formate the output using PAL2NAL
-5. 
 
+II. prepare for parallel running of PAML: mkdir sa{1..148} or mkdir sa{1..1000} #for focal and random genes
+5. perl prepare_paml_input_each_gene.pl #put the needed tree file (16_dro_updated.tree.txt), control file (codeml_update_file_names.txt) and sequences file together for each gene
+6. sbatch batch_submit_PAML.sub #submit PAML jobs in batch, need to call the paml_hpc.sub
+
+III. run Coevol
+7. perl prepare_coevolve_input_clean_data.pl #only run for genes that show signal of positive selection based on PAML
+8. batch_submit_coevol.sub #submite jobs in batch, need to call the coevol_run.sub
+
+IV. IDR analysis
+9. sbatch fIDPnn.sub #run flDPnn. #You can also use their servers: http://biomine.cs.vcu.edu/servers/flDPnn/
+10. perl gather_fIDPnn_results_random_file.pl #find the per
