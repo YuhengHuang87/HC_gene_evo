@@ -1,0 +1,29 @@
+#!/bin/bash
+
+#SBATCH --job-name=single_Illumina      ## Name of the job.
+#SBATCH -A grylee_lab     ## account to charge
+#SBATCH -p standard          ## partition/queue name
+#SBATCH --nodes=1            ## (-N) number of nodes to use
+#SBATCH --ntasks=1           ## (-n) number of tasks to launch
+#SBATCH --cpus-per-task=6    ## number of cores the job needs
+#SBATCH --error=slurm-%J.err ## error log file
+#SBATCH -t 4-20:00:00
+
+module load bwa/0.7.17
+module load samtools/1.15.1
+module load minimap2
+module load repeatmasker
+
+id=San #change for different species
+
+reads_1="/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/usftp21.novogene.com/raw_data/${id}/${id}_val_1.fq"
+reads_2="/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/usftp21.novogene.com/raw_data/${id}/${id}_val_2.fq"
+
+
+## for TE counts
+bwa mem -t 2 /dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/Dfam_16_species_TE_repeatmasked.fasta ${reads_1} ${reads_1} | samtools sort -@2 -o output_sorted_Dfam_species.bam
+samtools view -h -o out_sorted_Dfam_species.sam output_sorted_Dfam_species.bam
+
+## for estimating median coverage for the unmasked region
+bwa mem -t 2 ${id}_masked_genome.fasta ${reads_1} ${reads_2} | samtools sort -@2 -o output_sorted.bam
+samtools depth -q 30 output_sorted.bam > output_sorted_depth.txt
