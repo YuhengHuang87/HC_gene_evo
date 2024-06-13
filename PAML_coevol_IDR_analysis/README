@@ -1,1 +1,13 @@
 
+Before start
+Download coding sequences and genome annotations for 16 studied species from NCBI. Unzip and save the cds_from_genomic.fna for each species in "$species_name/ncbi_dataset/data/". 
+Download orthologous information from OrthoDB (https://www.orthodb.org/), and save the files odb11v0_genes.tab and odb11v0_genes.tab
+Download Clustal Omega (http://www.clustal.org/omega/), PAL2NAL (https://www.bork.embl.de/pal2nal/), PAML (http://abacus.gene.ucl.ac.uk/software/paml.html), Coevol (https://github.com/bayesiancook/coevol), and fIDPnn (https://gitlab.com/sina.ghadermarzi/fldpnn).
+
+I. Prepare coding sequences
+1. perl ortholog_species_CDS_id.pl #obtain orthologous coding sequences across species
+2. perl extract_sequences_clustal_input.pl #gather ortholog sequences across species for each gene
+3. perl translate_CDS_to_AA_seq.pl  #translate the coding sequences into amino acid sequences
+4. sbatch clustal.sub #perform alignment using Clustal Omega and formate the output using PAL2NAL
+5. 
+
