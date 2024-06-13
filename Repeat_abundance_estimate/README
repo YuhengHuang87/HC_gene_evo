@@ -1,4 +1,4 @@
-Before start install repeatmasker, bwa, samtools, minimap2, kmc3 (https://github.com/refresh-bio/KMC), trim_galore (https://github.com/FelixKrueger/TrimGalore)
+Before start install repeatmasker, bwa, samtools, minimap2, Satellite Repeat Finder (https://github.com/lh3/srf), kmc3 (https://github.com/refresh-bio/KMC), trim_galore (https://github.com/FelixKrueger/TrimGalore)
 
 I. estimate satellite repeat abundance
 1. sbatch Satellite_repeat_mapping_pipline.sub #follow the Satellite Repeat Finder program
@@ -8,4 +8,6 @@ II. estimate transposable element sequence abundance
 1. sbatch repeatmasker.sub
 2. perl extract_TE_sequence_repeatmasker.pl #extract the TE sequences from each genome assembly
 3. cat *_TE_library.fasta > Dfam_16_species_TE_repeatmasked.fasta #combine the potential TE sequences from 16 species to generate a new library
-4. TE_mapping_pipline
+4. sbatch TE_mapping_pipline.sub #map the Illumian reads to the combined TE library and masked genomes
+5. perl read_count_Dfam_TE.pl #count reads that mapped to TE sequences
+6. perl median_coverage_unmasked_16species.pl #estimated median coverage for unmasked genome
