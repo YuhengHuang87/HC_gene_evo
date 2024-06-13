@@ -20,4 +20,5 @@ III. run Coevol
 
 IV. IDR analysis
 9. sbatch fIDPnn.sub #run flDPnn. #You can also use their servers: http://biomine.cs.vcu.edu/servers/flDPnn/
-10. perl gather_fIDPnn_results_random_file.pl #find the per
+10. perl gather_fIDPnn_results_random_file.pl #find the Predicted Score for Disorder > 0.3 to call the residue as disorder
+11. Rscript phylogenetic_comparison_analysis.R #estimate the phylogenetic signal - Blomberg’s K 
