@@ -15,13 +15,12 @@ open(FILE1,"<", "$file")||die"$!";
 			    if($count =~ m/@/){
 }else{
 		#if (($b[4] > 20)&&($b[2] =~ m/DF/)){
-		#if ($b[4] >= 30){
-			#if (($b[2] =~ m/DF/)||($b[2] =~ m/DR/)){
+		if ($b[2] ne "*"){
 			if (exists $neu{$b[0]}){}else{
 				$neu{$b[0]}=$b[2];
 			$read++;
 		#}
-#}
+}
 }}
 }
 print OUT "$read\n";
