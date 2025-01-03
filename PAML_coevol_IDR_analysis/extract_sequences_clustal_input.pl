@@ -67,6 +67,7 @@ open(FILE1,"<", "$infile")||die"$!";
   	chomp($count);
 		if($count =~ m/>/){
 		my @b = split(",", $count);
+		if ($b[2] eq $key){
 		$orth_Iso = $melIso_orth{$b[2]};
 		$ID = $b[1];
 		if (exists $orth_ID{$orth_Iso}){
@@ -77,7 +78,7 @@ open(FILE1,"<", "$infile")||die"$!";
 				print OUT1 "$b[1]\t","$b[2]\n";
 				$dup++;
 			}
-}}}}
+}}}}}
 print "$dup\n";
 if ($dup ==0){
 
