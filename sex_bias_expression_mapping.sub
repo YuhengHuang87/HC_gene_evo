@@ -1,0 +1,51 @@
+#!/bin/bash
+
+#SBATCH --job-name=sex_bias_expression_mapping      ## Name of the job.
+#SBATCH -A grylee_lab     ## account to charge
+#SBATCH -p standard          ## partition/queue name
+#SBATCH --nodes=1            ## (-N) number of nodes to use
+#SBATCH --ntasks=1           ## (-n) number of tasks to launch
+#SBATCH --cpus-per-task=6    ## number of cores the job needs
+#SBATCH --error=slurm-%J.err ## error log file
+#SBATCH -t 8-20:00:00
+
+module load samtools/1.10
+
+module load mamba/24.3.0
+. ~/.mymambainit-24.3.0
+mamba activate hisat2
+
+
+assembly_path=/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/34species_annotation/raw_data_annotation/Santomea/ncbi_dataset/data/GCF_016746245.2
+#assembly_file=GCF_013340165.1_LBDM_Dsuz_2.1.pri_genomic.fna
+assembly_file=$(ls ${assembly_path}/G*_genomic.fna | head -n 1)
+species=san
+SRR_id_F=SRR7284670
+SRR_id_M=SRR7284668
+#SRR_id_F=wil_F
+#SRR_id_M=wil_M
+
+#use gffread to convert gff to gtf in each assembly folder
+/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/sex_bias_exp/gffread/gffread ${assembly_path}/genomic.gff -T -o ${assembly_path}/assembly.gtf
+python /dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/sex_bias_exp/hisat2/hisat2_extract_exons.py ${assembly_path}/assembly.gtf > ${assembly_path}/exons.txt
+python /dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species/sex_bias_exp/hisat2/hisat2_extract_splice_sites.py ${assembly_path}/assembly.gtf > ${assembly_path}/splice_sites.txt
+
+
+hisat2-build ${assembly_file} ${assembly_path}/${species} --ss ${assembly_path}/splice_sites.txt --exon ${assembly_path}/exons.txt
+
+### map paired-end reads
+#hisat2 -p 6 -x ${assembly_path}/${species} -1 ${SRR_id_F}_1.fastq -2 ${SRR_id_F}_2.fastq | samtools sort -@6 -o ${species}_Female_sorted.bam
+#hisat2 -p 6 -x ${assembly_path}/${species} -1 ${SRR_id_M}_1.fastq -2 ${SRR_id_M}_2.fastq | samtools sort -@6 -o ${species}_Male_sorted.bam
+
+### map single-end reads
+hisat2 -p 6 -x ${assembly_path}/${species} -U ${SRR_id_F}.fastq | samtools sort -@6 -o ${species}_Female_sorted.bam
+hisat2 -p 6 -x ${assembly_path}/${species} -U ${SRR_id_M}.fastq | samtools sort -@6 -o ${species}_Male_sorted.bam
+
+# get gene expression
+mamba deactivate
+mamba activate stringtie
+
+stringtie -p 6 ${species}_Female_sorted.bam -G ${assembly_path}/genomic.gff -o ${species}_F_stringtie.gtf
+stringtie -p 6 ${species}_Male_sorted.bam -G ${assembly_path}/genomic.gff -o ${species}_M_stringtie.gtf
+
+
