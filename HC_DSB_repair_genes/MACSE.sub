@@ -1,0 +1,36 @@
+#!/bin/bash
+#SBATCH --job-name=omm_macse
+#SBATCH -A grylee_lab
+#SBATCH -p standard
+#SBATCH --array=1-56
+#SBATCH --cpus-per-task=2
+#SBATCH --mem=8G
+#SBATCH --time=24:00:00
+#SBATCH --output=logs/macse_%A_%a.out
+#SBATCH --error=logs/macse_%A_%a.err
+
+module load apptainer
+BASE=/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species
+SIF=/dfs7/grylee/yuhenh3/tools/macse/omm_macse_v12.02.sif
+cd $BASE
+
+FILE=$(ls Clustal_input_23species/*.fa | sed -n "${SLURM_ARRAY_TASK_ID}p")
+# without this, an empty GENE makes OUT the parent folder and the rm -r below deletes every gene
+[ -z "$FILE" ] && { echo "no input file for task ${SLURM_ARRAY_TASK_ID}"; exit 0; }
+GENE=$(basename "$FILE" .fa)
+
+OUT_PARENT=MACSE_PRANK_23species
+OUT="$OUT_PARENT/$GENE"
+mkdir -p "$OUT_PARENT"                       # parent must exist; gene dir must not
+
+if [ -s "$OUT/${GENE}_final_align_NT.aln" ]; then
+    echo "$GENE already done, skipping"; exit 0
+fi
+[ -d "$OUT" ] && rm -r "$OUT"                # remove leftover from a failed run only
+
+apptainer run --bind /dfs7 $SIF \
+  --in_seq_file "$FILE" --out_dir "$OUT" --out_file_prefix "$GENE" \
+  --alignAA_soft PRANK --aligner_extra_option "-F" \
+  --java_mem 6000m --save_details
+
+

@@ -1,0 +1,57 @@
+#!/bin/bash
+
+#SBATCH --job-name=MACSE_PAML_setup   ## Name of the job.
+#SBATCH -A grylee_lab     ## account to charge
+#SBATCH -p standard          ## partition/queue name
+#SBATCH --nodes=1            ## (-N) number of nodes to use
+#SBATCH --ntasks=1           ## (-n) number of tasks to launch
+#SBATCH --cpus-per-task=1    ## number of cores the job needs
+#SBATCH --mem=4G
+#SBATCH -t 02:00:00
+#SBATCH --output=logs/MACSE_PAML_setup_%j.out
+#SBATCH --error=logs/MACSE_PAML_setup_%j.err
+
+# Build the codeml sa<N> folders (M7_8 and M8a) from the MACSE alignments.
+# Submit from $BASE (logs/ must exist):
+#   sbatch MACSE_PAML_setup.sub unmask   -> *_final_unmask_align_NT.aln, '!' codons and stop codons -> NNN,
+#                                           written to MACSE_PRANK_23species/input_files_unmask
+#   sbatch MACSE_PAML_setup.sub mask     -> *_final_align_NT.aln, written to MACSE_PRANK_23species/input_files_ms
+# Then: sbatch MACSE_PAML_submit.sub "M7_8 M8a" input_files_unmask
+#
+# Repeat M8 from other initial omega values for genes the result table flagged:
+#   sbatch MACSE_PAML_setup.sub rerun input_files_unmask \
+#          paml_likelihood_result_MACSE_input_files_unmask_Aniek_gene_list_2026.tsv
+#   -> MACSE_PRANK_23species/input_files_unmask_rerun/M8_w{0.5,1.5,3}
+
+BASE=/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species
+MACSE_DIR=$BASE/MACSE_PRANK_23species
+SCRIPT=$BASE/macse_paml_input_each_gene.py
+TEMPLATE_DIR=$BASE      # folder holding codeml_update_M7_8.txt and codeml_update_fix_omerga.txt
+
+MODE=${1:-unmask}
+
+if [ "$MODE" = "rerun" ]; then
+    INPUT_NAME=${2:-input_files_unmask}
+    RESULT=${3:-$BASE/paml_likelihood_result_MACSE_${INPUT_NAME}_Aniek_gene_list_2026.tsv}
+    python3 $BASE/rerun_paml_M8_initial_omega.py \
+        --input_dir "$MACSE_DIR/$INPUT_NAME" --result "$RESULT" --omegas 0.5 1.5 3
+    exit $?
+fi
+
+case "$MODE" in
+    unmask)
+        OUT=$MACSE_DIR/input_files_unmask
+        OPTS="--aln_suffix _final_unmask_align_NT.aln --export_frameshifts --tag macse_unmask" ;;
+    mask)
+        OUT=$MACSE_DIR/input_files_ms
+        OPTS="--aln_suffix _final_align_NT.aln --tag macse" ;;
+    *)
+        echo "Usage: sbatch MACSE_PAML_setup.sub [unmask|mask]"; exit 1 ;;
+esac
+
+# never overwrite folders that may already hold codeml results
+if [ -e "$OUT" ]; then
+    echo "$OUT already exists; rename or remove it before setting up again"; exit 1
+fi
+
+python3 "$SCRIPT" --macse_dir "$MACSE_DIR" --template_dir "$TEMPLATE_DIR" --out_dir "$OUT" $OPTS

@@ -1,0 +1,48 @@
+#!/bin/bash
+#SBATCH --job-name=cerv_X_macse_paml_unmask
+#SBATCH -A grylee_lab
+#SBATCH -p standard
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=2
+#SBATCH --mem=8G
+#SBATCH --time=2-00:00:00
+#SBATCH --output=slurm-%J.out
+#SBATCH --error=slurm-%J.err
+
+# cerv_X, 17 melanogaster-group species: codeml M7_8 and M8a from the UNMASKED MACSE alignment
+# (MACSE/cerv_X/cerv_X_final_unmask_align_NT.aln, before HMMCleaner masking).
+# The alignment made by cerv_X_MACSE_PAML.sub is reused; MACSE is not run again.
+# Codons holding a frameshift '!' and stop codons become NNN, as in MACSE's own export step.
+# Results go to input_files_unmask/, so the masked runs in input_files/ are untouched.
+# Submit from this folder:  sbatch cerv_X_MACSE_PAML_unmask.sub
+set -euo pipefail
+
+BASE=/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species
+WD=$BASE/cerv_X_Mel_group
+CODEML=$BASE/paml4.9j/bin/codeml
+GENE=cerv_X
+ALN=MACSE/$GENE/${GENE}_final_unmask_align_NT.aln
+cd $WD
+
+[ -s "$ALN" ] || { echo "Missing $WD/$ALN - run cerv_X_MACSE_PAML.sub first"; exit 1; }
+python3 macse_paml_input_each_gene.py --help | grep -q export_frameshifts || {
+    echo "macse_paml_input_each_gene.py in $WD is the old version: copy the current one from $BASE"; exit 1; }
+
+# 1. codeml inputs: input_files_unmask/{M7_8,M8a}/sa1/ (PHYLIP + tree + codeml.ctl), after alignment/tree checks
+python3 macse_paml_input_each_gene.py --macse_dir MACSE --tree_dir species_num \
+    --out_dir input_files_unmask --template_dir . \
+    --aln_suffix _final_unmask_align_NT.aln --export_frameshifts --tag macse_unmask
+[ -f input_files_unmask/M7_8/sa1/codeml.ctl ] || { echo "codeml input not written (see checks above)"; exit 1; }
+
+# 2. codeml, both models in parallel (codeml reads codeml.ctl from the working directory)
+for model in M7_8 M8a; do
+    ( cd input_files_unmask/$model/sa1 && $CODEML > codeml.log 2>&1 ) &
+done
+wait
+grep -H "lnL" input_files_unmask/*/sa1/${GENE}_*_output_macse_unmask
+
+# M8 must fit at least as well as M7 and M8a. If the lnL above says otherwise, repeat M8 from other
+# starting omega values, then read the best fit with the --m8_rerun_dirs option of the grab script:
+#   python3 $BASE/rerun_paml_M8_initial_omega.py --input_dir input_files_unmask --genes cerv_X
+#   for d in input_files_unmask_rerun/M8_w*/sa1; do ( cd $d && $CODEML > codeml.log 2>&1 ) & done; wait

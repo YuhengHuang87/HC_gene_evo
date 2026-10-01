@@ -1,0 +1,26 @@
+#!/bin/bash
+
+#SBATCH --job-name=MACSE_PAML_grab   ## Name of the job.
+#SBATCH -A grylee_lab     ## account to charge
+#SBATCH -p standard          ## partition/queue name
+#SBATCH --nodes=1            ## (-N) number of nodes to use
+#SBATCH --ntasks=1           ## (-n) number of tasks to launch
+#SBATCH --cpus-per-task=1    ## number of cores the job needs
+#SBATCH --mem=2G
+#SBATCH -t 01:00:00
+#SBATCH --output=logs/MACSE_PAML_grab_%j.out
+#SBATCH --error=logs/MACSE_PAML_grab_%j.err
+
+# Collect M7/M8/M8a lnL and LRTs for the genes in Aniek_gene_list_2026.txt.
+# Submit from $BASE (logs/ must exist):
+#   sbatch MACSE_PAML_grab.sub                                            -> input_files_ms (masked)
+#   sbatch MACSE_PAML_grab.sub input_files_unmask                         -> unmasked alignments
+
+BASE=/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species
+MACSE_DIR=$BASE/MACSE_PRANK_23species
+INPUT_NAME=${1:-input_files_ms}
+
+python3 $BASE/grab_paml_result_likelihood_macse.py \
+    --input_dir $MACSE_DIR/$INPUT_NAME \
+    --gene_list $BASE/Aniek_gene_list_2026.txt \
+    --out $BASE/paml_likelihood_result_MACSE_${INPUT_NAME}_species_combined_Aniek_gene_list_2026.tsv

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+#SBATCH --job-name=assign_MACSE_PAML_jobs   ## Name of the job.
+#SBATCH -A grylee_lab     ## account to charge
+#SBATCH -p standard          ## partition/queue name
+#SBATCH --nodes=1            ## (-N) number of nodes to use
+#SBATCH --ntasks=1           ## (-n) number of tasks to launch
+#SBATCH --cpus-per-task=1    ## number of cores the job needs
+#SBATCH --error=slurm-%J.err ## error log file
+#SBATCH -t 1-20:00:00
+
+# Submit one codeml job (paml_hpc.sub) per sa<N> folder made by macse_paml_input_each_gene.py.
+# Usage: sbatch MACSE_PAML_submit.sub                                   (both models, input_files_ms)
+#        sbatch MACSE_PAML_submit.sub M8a                               (one model only)
+#        sbatch MACSE_PAML_submit.sub "M7_8 M8a" input_files_unmask     (unmasked alignments)
+
+BASE=/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species
+MODELS=${1:-"M7_8 M8a"}
+INPUT=$BASE/MACSE_PRANK_23species/${2:-input_files_ms}
+PAML_SUB=$BASE/paml_hpc.sub
+
+for model in $MODELS; do
+    for dir in "$INPUT/$model"/sa*/ ; do
+        [ -f "$dir/codeml.ctl" ] || continue
+        echo "$model: $dir"
+        # subshell so each job starts in its own sa folder (codeml reads codeml.ctl from the working directory)
+        ( cd "$dir" && ls && sbatch "$PAML_SUB" )
+    done
+done

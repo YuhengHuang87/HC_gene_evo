@@ -1,0 +1,2 @@
+17 1
+((((D_biarmipes,(D_subpulchrella,D_suzukii)),(D_pseudotakahashii,D_takahashii)),((D_erecta,(D_teissieri_273_3,(D_santomea,D_yakuba))),(((D_mauritiana,D_simulans),D_sechellia),D_melanogaster))),(D_rhopaloa,(D_gunungcola,D_elegans)),D_ficusphila);

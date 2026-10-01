@@ -1,0 +1,26 @@
+#!/bin/bash
+#SBATCH --job-name=cerv_X_three_ratio
+#SBATCH -A grylee_lab
+#SBATCH -p standard
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=2
+#SBATCH --mem=4G
+#SBATCH --time=04:00:00
+#SBATCH --output=slurm-%J.out
+#SBATCH --error=slurm-%J.err
+
+# Rerun of the three-ratio branch model only: D. pseudotakahashii moves from the single-copy class
+# to the background (2 copies; tblastn found a second, unannotated cerv36B_2L-like copy on scaffold84),
+# so #2 is now D. ficusphila alone. The other runs use unchanged trees and are not refitted.
+# Submit from cerv_X_Mel_group/:  sbatch branch_models/cerv_X_three_ratio_rerun.sub
+set -euo pipefail
+
+BASE=/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species
+CODEML=$BASE/paml4.9j/bin/codeml
+cd $BASE/cerv_X_Mel_group
+
+python3 branch_models/setup_branch_models.py
+( cd branch_models/three_ratio && $CODEML > codeml.log 2>&1 )
+
+python3 branch_models/grab_branch_models.py | tee branch_models/cerv_X_branch_models_LRT.txt

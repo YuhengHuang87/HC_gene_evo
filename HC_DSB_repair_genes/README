@@ -1,0 +1,43 @@
+
+Scripts for the HC DSB repair genes (updated Oct 2026). Compared with PAML_coevol_IDR_analysis:
+1. Coding sequences are aligned with MACSE (OMM_MACSE pipeline) instead of Clustal Omega + PAL2NAL
+2. A phylogenetic tree is built for each gene by pruning a 34-species Drosophila tree to the species in its alignment
+3. Branch models in PAML (cerv_X)
+
+The .sub files are Slurm scripts for UCI HPC3. BASE=/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species is the working folder in the scripts, change it to your own. Submit the jobs from $BASE and make a logs/ folder there first.
+
+Before start
+Download the OMM_MACSE container (we used omm_macse_v12.02.sif: MACSE v2.08, PRANK, HMMCleaner) from https://www.agap-ge2pop.org/macsee-pipelines/ (also on Docker Hub as omm_macse), and run it with Apptainer.
+Install R (4.4.2) with the ape package, and PAML 4.9j (http://abacus.gene.ucl.ac.uk/software/paml.html).
+Put the coding sequences of each gene in $BASE/Clustal_input_23species/<gene>.fa (headers are species names, e.g. >D_melanogaster), and the species of each gene in <gene>_species.txt (one species per line).
+
+I. Align coding sequences with MACSE
+1. sbatch MACSE.sub #OMM_MACSE with PRANK (option -F), one array task per gene, set --array to the number of genes. Output in MACSE_PRANK_23species/<gene>/
+
+II. Build the phylogenetic tree for each gene
+2. mkdir MACSE_PRANK_23species/species_num
+3. module load R/4.4.2; Rscript -e 'library(ape); source("tree_pruning.R")' #prune the 34-species tree to the species in <gene>_species.txt and unroot it, writes species_num/<gene>_tree.txt
+
+III. PAML site models (M7, M8, M8a) on the MACSE alignments
+4. sbatch MACSE_PAML_setup.sub mask #or "unmask" for the alignments before HMMCleaner masking. Calls macse_paml_input_each_gene.py, which checks each alignment against its tree and writes one sa<N> folder per gene with the alignment (PHYLIP), the tree and codeml.ctl (from codeml_update_M7_8.txt or codeml_update_fix_omerga.txt)
+5. sbatch MACSE_PAML_submit.sub "M7_8 M8a" input_files_ms #submit one codeml job (paml_hpc.sub) per sa folder
+6. sbatch MACSE_PAML_grab.sub input_files_ms #grab_paml_result_likelihood_macse.py: lnL, LRTs (M7 vs M8, M8a vs M8) and BEB sites for each gene
+7. If lnL(M8) is lower than lnL(M7) or lnL(M8a), refit M8 from initial omega 0.5, 1.5 and 3 (rerun_paml_M8_initial_omega.py):
+   sbatch MACSE_PAML_setup.sub rerun input_files_ms <result table from step 6>
+   sbatch MACSE_PAML_submit.sub "M8_w0.5 M8_w1.5 M8_w3" input_files_ms_rerun
+   then add --m8_rerun_dirs with the three M8_w folders to the command in MACSE_PAML_grab.sub to keep the best M8 fit
+
+IV. PAML branch models for cerv_X (17 species of the melanogaster group), run from cerv_X_Mel_group/
+Copy macse_paml_input_each_gene.py, codeml_update_M7_8.txt and codeml_update_fix_omerga.txt into cerv_X_Mel_group/. species_num/cerv_X_tree.txt is the 34-species tree pruned to these 17 species and unrooted.
+8. sbatch cerv_X_MACSE_PAML.sub #MACSE alignment of cerv_X.fa, then M7/M8/M8a
+9. sbatch cerv_X_MACSE_PAML_unmask.sub #M7/M8/M8a on the unmasked alignment, its input_files_unmask/ is used by the branch models
+10. sbatch branch_models/cerv_X_branch_models.sub #setup_branch_models.py writes the trees and codeml.ctl files, then codeml runs and grab_branch_models.py does the LRTs
+    foreground (#1) = D. melanogaster complex (3-4 cerv copies), background (#0) = lineages with 2 copies
+    M0: one omega for all branches
+    two_ratio: background and foreground omega
+    three_ratio: adds a third omega for the single-copy D. ficusphila (#2)
+    free_ratio: one omega per branch
+    BSA_null, BSA_alt: branch-site model A, foreground omega2 fixed at 1 or estimated
+    M2a_rel, CmC: clade model C and its null
+11. sbatch branch_models/cerv_X_three_ratio_rerun.sub #rerun only the three-ratio model after changing the #2 branch
+12. python3 branch_models/free_ratio_branch_omega.py <free_ratio output> <codon alignment> <copies.fa, headers species|copy> <prefix> #per-branch dN/dS from the free-ratio run, as a table and a labelled tree for ggtree

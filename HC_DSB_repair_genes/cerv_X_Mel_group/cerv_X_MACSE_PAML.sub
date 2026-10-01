@@ -1,0 +1,45 @@
+#!/bin/bash
+#SBATCH --job-name=cerv_X_macse_paml
+#SBATCH -A grylee_lab
+#SBATCH -p standard
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=2
+#SBATCH --mem=8G
+#SBATCH --time=2-00:00:00
+#SBATCH --output=slurm-%J.out
+#SBATCH --error=slurm-%J.err
+
+# cerv_X, 17 melanogaster-group species: OMM_MACSE (PRANK) alignment -> codeml M7_8 and M8a.
+# Submit from this folder:  sbatch cerv_X_MACSE_PAML.sub
+set -euo pipefail
+
+BASE=/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species
+WD=$BASE/cerv_X_Mel_group
+SIF=/dfs7/grylee/yuhenh3/tools/macse/omm_macse_v12.02.sif
+CODEML=$BASE/paml4.9j/bin/codeml
+GENE=cerv_X
+cd $WD
+
+# 1. MACSE (same settings as MACSE.sub)
+module load apptainer
+mkdir -p MACSE
+if [ ! -s "MACSE/$GENE/${GENE}_final_align_NT.aln" ]; then
+    [ -d "MACSE/$GENE" ] && rm -r "MACSE/$GENE"   # MACSE needs a fresh gene dir
+    apptainer run --bind /dfs7 $SIF \
+      --in_seq_file "$GENE.fa" --out_dir "MACSE/$GENE" --out_file_prefix "$GENE" \
+      --alignAA_soft PRANK --aligner_extra_option "-F" \
+      --java_mem 6000m --save_details
+fi
+
+# 2. codeml inputs: input_files/{M7_8,M8a}/sa1/ (PHYLIP + tree + codeml.ctl), after alignment/tree checks
+python3 macse_paml_input_each_gene.py --macse_dir MACSE --tree_dir species_num \
+    --out_dir input_files --template_dir .
+[ -f input_files/M7_8/sa1/codeml.ctl ] || { echo "codeml input not written (see checks above)"; exit 1; }
+
+# 3. codeml, both models in parallel (codeml reads codeml.ctl from the working directory)
+for model in M7_8 M8a; do
+    ( cd input_files/$model/sa1 && $CODEML > codeml.log 2>&1 ) &
+done
+wait
+grep -H "lnL" input_files/*/sa1/${GENE}_*_output_macse

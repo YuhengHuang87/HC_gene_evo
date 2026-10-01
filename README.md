@@ -11,3 +11,5 @@ sex_bias_expression_mapping.sub
 1. The alignment of coding sequences is changed to use MACSE
 2. added phylogenetic tree building
 3. added branch model script in PAML
+
+Scripts are in folder HC_DSB_repair_genes.

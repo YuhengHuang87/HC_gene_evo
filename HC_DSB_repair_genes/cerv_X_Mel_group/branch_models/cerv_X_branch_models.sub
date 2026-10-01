@@ -1,0 +1,31 @@
+#!/bin/bash
+#SBATCH --job-name=cerv_X_branch_models
+#SBATCH -A grylee_lab
+#SBATCH -p standard
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=8G
+#SBATCH --time=2-00:00:00
+#SBATCH --output=slurm-%J.out
+#SBATCH --error=slurm-%J.err
+
+# cerv_X, 17 melanogaster-group species: lineage-specific dN/dS on the UNMASKED MACSE alignment.
+# Foreground = D. melanogaster complex (3-4 cerv paralogs). See setup_branch_models.py for trees/models.
+# Submit from cerv_X_Mel_group/:  sbatch branch_models/cerv_X_branch_models.sub
+set -euo pipefail
+
+BASE=/dfs7/grylee/yuhenh3/Heterochromatic_repeat_Novagenes_17species
+WD=$BASE/cerv_X_Mel_group
+CODEML=$BASE/paml4.9j/bin/codeml
+cd $WD
+
+python3 branch_models/setup_branch_models.py
+
+# 8 codeml runs in parallel (codeml reads codeml.ctl from the working directory)
+for run in M0 two_ratio three_ratio free_ratio BSA_null BSA_alt M2a_rel CmC; do
+    ( cd branch_models/$run && $CODEML > codeml.log 2>&1 ) &
+done
+wait
+
+python3 branch_models/grab_branch_models.py | tee branch_models/cerv_X_branch_models_LRT.txt
