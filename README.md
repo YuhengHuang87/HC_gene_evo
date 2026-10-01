@@ -5,3 +5,9 @@ Scripts for estimating satellite_repeat and transposable element abundance are i
 
 pipline for sex bias expression analysis:
 sex_bias_expression_mapping.sub
+
+
+# HC DSB repair genes (updated Oct 2026)
+1. The alignment of coding sequences is changed to use MACSE
+2. added phylogenetic tree building
+3. added branch model script in PAML
